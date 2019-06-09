@@ -1,5 +1,5 @@
 FROM alpine
-MAINTAINER David Personette <dperson@gmail.com>
+MAINTAINER nativusdoge
 
 # Install openvpn
 RUN apk --no-cache --no-progress upgrade && \

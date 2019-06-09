@@ -1,4 +1,4 @@
-[![logo](https://raw.githubusercontent.com/dperson/openvpn-client/master/logo.png)](https://openvpn.net/)
+[![logo](https://raw.githubusercontent.com/nativusdoge/openvpn-client/master/logo.png)](https://openvpn.net/)
 
 # OpenVPN
 
@@ -37,13 +37,13 @@ container) when you launch the service in it's container.
 
 **NOTE 5**: If you need a template for using this container with
 `docker-compose`, see the example
-[file](https://github.com/dperson/openvpn-client/raw/master/docker-compose.yml).
+[file](https://github.com/nativusdoge/openvpn-client/raw/master/docker-compose.yml).
 
 ## Starting an OpenVPN client instance
 
     sudo cp /path/to/vpn.crt /some/path/vpn-ca.crt
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
-                -v /some/path:/vpn -d dperson/openvpn-client \
+                -v /some/path:/vpn -d nativusdoge/openvpn-client \
                 -v 'vpn.server.name;username;password'
     sudo docker restart vpn
 
@@ -86,7 +86,7 @@ Running the following on your docker host should give you the correct network:
 
     sudo cp /path/to/vpn.crt /some/path/vpn-ca.crt
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
-                -v /some/path:/vpn -d dperson/openvpn-client \
+                -v /some/path:/vpn -d nativusdoge/openvpn-client \
                 -r 192.168.1.0/24 -v 'vpn.server.name;username;password'
 
 **NOTE**: if you don't use the `-v` to configure your VPN, then you'll have to
@@ -98,7 +98,7 @@ the second container (that's what `--net=container:vpn` does).
 
 ## Configuration
 
-    sudo docker run -it --rm dperson/openvpn-client -h
+    sudo docker run -it --rm nativusdoge/openvpn-client -h
 
     Usage: openvpn.sh [-opt] [command]
     Options (fields in '[]' are optional, '<>' are required):
@@ -152,7 +152,7 @@ Any of the commands can be run at creation with `docker run` or later with
 
     sudo cp /path/to/vpn.crt /some/path/vpn-ca.crt
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
-                -v /some/path:/vpn -e TZ=EST5EDT -d dperson/openvpn \
+                -v /some/path:/vpn -e TZ=EST5EDT -d nativusdoge/openvpn \
                 -v 'vpn.server.name;username;password'
 
 ### VPN configuration
@@ -162,13 +162,13 @@ use external storage for `/vpn`:
 
     sudo cp /path/to/vpn.crt /some/path/vpn-ca.crt
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
-                -v /some/path:/vpn -d dperson/openvpn-client \
+                -v /some/path:/vpn -d nativusdoge/openvpn-client \
                 -v 'vpn.server.name;username;password'
 
 Or you can store it in the container:
 
     cat /path/to/vpn.crt | sudo docker run -it --cap-add=NET_ADMIN \
-                --device /dev/net/tun --name vpn -d dperson/openvpn-client \
+                --device /dev/net/tun --name vpn -d nativusdoge/openvpn-client \
                 -v 'vpn.server.name;username;password' tee /vpn/vpn-ca.crt \
                 >/dev/null
     sudo docker restart vpn
@@ -180,7 +180,7 @@ block all outbound traffic if the VPN is down.
 
     sudo cp /path/to/vpn.crt /some/path/vpn-ca.crt
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
-                -v /some/path:/vpn -d dperson/openvpn-client -f "" \
+                -v /some/path:/vpn -d nativusdoge/openvpn-client -f "" \
                 -v 'vpn.server.name;username;password'
 
 ### DNS Issues (May Look Like You Can't Connect To Anything)
@@ -191,7 +191,7 @@ get from your VPN. You'll need to add the `--dns` command line option to the
 
     sudo cp /path/to/vpn.crt /some/path/vpn-ca.crt
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
-                --dns 8.8.4.4 -v /some/path:/vpn -d dperson/openvpn-client \
+                --dns 8.8.4.4 -v /some/path:/vpn -d nativusdoge/openvpn-client \
                 -v 'vpn.server.name;username;password'
 
 # User Feedback
@@ -199,4 +199,4 @@ get from your VPN. You'll need to add the `--dns` command line option to the
 ## Issues
 
 If you have any problems with or questions about this image, please contact me
-through a [GitHub issue](https://github.com/dperson/openvpn-client/issues).
+through a [GitHub issue](https://github.com/nativusdoge/openvpn-client/issues).

@@ -1,5 +1,5 @@
 FROM balenalib/aarch64-alpine
-MAINTAINER David Personette <dperson@gmail.com>
+MAINTAINER nativusdoge
 
 # Install openvpn
 RUN ["cross-build-start"]
