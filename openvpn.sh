@@ -50,26 +50,11 @@ dns() {
 #   none)
 # Return: configured firewall
 firewall() { local port="${1:-1194}" docker_network="$(ip -o addr show dev eth0|
-            awk '$3 == "inet" {print $4}')" network \
-            docker6_network="$(ip -o addr show dev eth0 |
-            awk '$3 == "inet6" {print $4; exit}')"
+            awk '$3 == "inet" {print $4}')" network
     [[ -z "${1:-""}" && -r $conf ]] &&
         port="$(awk '/^remote / && NF ~ /^[0-9]*$/ {print $NF}' $conf |
                     grep ^ || echo 1194)"
 
-    ip6tables -F OUTPUT 2>/dev/null
-    ip6tables -P OUTPUT DROP 2>/dev/null
-    ip6tables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT \
-                2>/dev/null
-    ip6tables -A OUTPUT -o lo -j ACCEPT 2>/dev/null
-    ip6tables -A OUTPUT -o tap0 -j ACCEPT 2>/dev/null
-    ip6tables -A OUTPUT -o tun0 -j ACCEPT 2>/dev/null
-    ip6tables -A OUTPUT -d ${docker6_network} -j ACCEPT 2>/dev/null
-    ip6tables -A OUTPUT -p udp -m udp --dport 53 -j ACCEPT 2>/dev/null
-    ip6tables -A OUTPUT -p tcp -m owner --gid-owner vpn -j ACCEPT 2>/dev/null &&
-    ip6tables -A OUTPUT -p udp -m owner --gid-owner vpn -j ACCEPT 2>/dev/null||{
-        ip6tables -A OUTPUT -p tcp -m tcp --dport $port -j ACCEPT 2>/dev/null
-        ip6tables -A OUTPUT -p udp -m udp --dport $port -j ACCEPT 2>/dev/null; }
     iptables -F OUTPUT
     iptables -P OUTPUT DROP
     iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
@@ -82,20 +67,7 @@ firewall() { local port="${1:-1194}" docker_network="$(ip -o addr show dev eth0|
     iptables -A OUTPUT -p udp -m owner --gid-owner vpn -j ACCEPT || {
         iptables -A OUTPUT -p tcp -m tcp --dport $port -j ACCEPT
         iptables -A OUTPUT -p udp -m udp --dport $port -j ACCEPT; }
-    [[ -s $route6 ]] && for net in $(cat $route6); do return_route6 $net; done
     [[ -s $route ]] && for net in $(cat $route); do return_route $net; done
-}
-
-### return_route: add a route back to your network, so that return traffic works
-# Arguments:
-#   network) a CIDR specified network range
-# Return: configured return route
-return_route6() { local network="$1" gw="$(ip -6 route |
-                awk '/default/{print $3}')"
-    ip -6 route | grep -q "$network" ||
-        ip -6 route add to $network via $gw dev eth0
-    ip6tables -A OUTPUT --destination $network -j ACCEPT 2>/dev/null
-    [[ -e $route6 ]] &&grep -q "^$network\$" $route6 ||echo "$network" >>$route6
 }
 
 ### return_route: add a route back to your network, so that return traffic works
@@ -158,8 +130,6 @@ vpn() { local server="$1" user="$2" pass="$3" port="${4:-1194}" i \
 #   port) forwarded port
 # Return: configured NAT rule
 vpnportforward() { local port="$1" protocol="${2:-tcp}"
-    ip6tables -t nat -A OUTPUT -p $protocol --dport $port -j DNAT \
-                --to-destination ::11:$port 2>/dev/null
     iptables -t nat -A OUTPUT -p $protocol --dport $port -j DNAT \
                 --to-destination 127.0.0.11:$port
     echo "Setup forwarded port: $port $protocol"
@@ -185,9 +155,6 @@ Options (fields in '[]' are optional, '<>' are required):
     -p '<port>[;protocol]' Forward port <port>
                 required arg: '<port>'
                 optional arg: [protocol] to use instead of default (tcp)
-    -R '<network>' CIDR IPv6 network (IE fe00:d34d:b33f::/64)
-                required arg: '<network>'
-                <network> add a route to (allows replies once the VPN is up)
     -r '<network>' CIDR network (IE 192.168.1.0/24)
                 required arg: '<network>'
                 <network> add a route to (allows replies once the VPN is up)
@@ -209,7 +176,6 @@ cert_auth="$dir/vpn.cert_auth"
 conf="$dir/vpn.conf"
 cert="$dir/vpn-ca.crt"
 route="$dir/.firewall"
-route6="$dir/.firewall6"
 [[ -f $conf ]] || { [[ $(ls -d $dir/*|egrep '\.(conf|ovpn)$' 2>&-|wc -w) -eq 1 \
             ]] && conf="$(ls -d $dir/* | egrep '\.(conf|ovpn)$' 2>&-)"; }
 [[ -f $cert ]] || { [[ $(ls -d $dir/* | egrep '\.ce?rt$' 2>&- | wc -w) -eq 1 \
@@ -219,7 +185,6 @@ route6="$dir/.firewall6"
 [[ "${DNS:-""}" ]] && dns
 [[ "${GROUPID:-""}" =~ ^[0-9]+$ ]] && groupmod -g $GROUPID -o vpn
 [[ "${FIREWALL:-""}" || -e $route ]] && firewall "${FIREWALL:-""}"
-[[ "${ROUTE6:-""}" ]] && return_route6 "$ROUTE6"
 [[ "${ROUTE:-""}" ]] && return_route "$ROUTE"
 [[ "${VPN:-""}" ]] && eval vpn $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $VPN)
 [[ "${VPNPORT:-""}" ]] && eval vpnportforward $(sed 's/^/"/; s/$/"/; s/;/" "/g'\
@@ -230,10 +195,9 @@ while getopts ":hc:df:m:p:R:r:v:" opt; do
         h) usage ;;
         c) cert_auth "$OPTARG" ;;
         d) dns ;;
-        f) firewall "$OPTARG"; touch $route $route6 ;;
+        f) firewall "$OPTARG"; touch $route ;;
         m) MSS="$OPTARG" ;;
         p) eval vpnportforward $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $OPTARG) ;;
-        R) return_route6 "$OPTARG" ;;
         r) return_route "$OPTARG" ;;
         v) eval vpn $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $OPTARG) ;;
         "?") echo "Unknown option: -$OPTARG"; usage 1 ;;

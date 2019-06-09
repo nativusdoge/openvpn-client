@@ -4,7 +4,7 @@ MAINTAINER nativusdoge
 # Install openvpn
 RUN ["cross-build-start"]
 RUN apk --no-cache --no-progress upgrade && \
-    apk --no-cache --no-progress add bash curl ip6tables iptables openvpn \
+    apk --no-cache --no-progress add bash curl iptables openvpn \
                 shadow tini && \
     addgroup -S vpn && \
     rm -rf /tmp/*
