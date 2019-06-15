@@ -49,25 +49,23 @@ dns() {
 # Arguments:
 #   none)
 # Return: configured firewall
-firewall() { local port="${1:-1194}" docker_network="$(ip -o addr show dev eth0|
-            awk '$3 == "inet" {print $4}')" network
-    [[ -z "${1:-""}" && -r $conf ]] &&
-        port="$(awk '/^remote / && NF ~ /^[0-9]*$/ {print $NF}' $conf |
-                    grep ^ || echo 1194)"
+firewall() { local docker_network="$(ip -o addr show dev eth0 | awk '$3 == "inet" {print $4}')" \
+             vpn_endpoint="$(awk '/^remote / {print $2}' $conf)" \
+             port="$(awk '/^remote / {print $3}' $conf)"
 
-    iptables -F OUTPUT
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
     iptables -P OUTPUT DROP
-    iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+    iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
     iptables -A OUTPUT -o lo -j ACCEPT
-    iptables -A OUTPUT -o tap0 -j ACCEPT
-    iptables -A OUTPUT -o tun0 -j ACCEPT
     iptables -A OUTPUT -d ${docker_network} -j ACCEPT
-    iptables -A OUTPUT -p udp -m udp --dport 53 -j ACCEPT
-    iptables -A OUTPUT -p tcp -m owner --gid-owner vpn -j ACCEPT 2>/dev/null &&
-    iptables -A OUTPUT -p udp -m owner --gid-owner vpn -j ACCEPT || {
-        iptables -A OUTPUT -p tcp -m tcp --dport $port -j ACCEPT
-        iptables -A OUTPUT -p udp -m udp --dport $port -j ACCEPT; }
-    [[ -s $route ]] && for net in $(cat $route); do return_route $net; done
+    iptables -A OUTPUT -d ${docker_network} -p udp --dport 53 -j DROP
+
+    iptables -A OUTPUT -d ${vpn_endpoint} -p tcp --dport ${port} -j ACCEPT
+    iptables -A OUTPUT -o tun0 -j ACCEPT
+    # [[ -s $route ]] && for net in $(cat $route); do return_route $net; done
 }
 
 ### return_route: add a route back to your network, so that return traffic works
@@ -180,44 +178,39 @@ route="$dir/.firewall"
 [[ -f $cert ]] || { [[ $(ls -d $dir/* | egrep '\.ce?rt$' 2>&- | wc -w) -eq 1 \
             ]] && cert="$(ls -d $dir/* | egrep '\.ce?rt$' 2>&-)"; }
 
-[[ "${CERT_AUTH:-""}" ]] && cert_auth "$CERT_AUTH"
+#[[ "${CERT_AUTH:-""}" ]] && cert_auth "$CERT_AUTH"
 [[ "${DNS:-""}" ]] && dns
 [[ "${GROUPID:-""}" =~ ^[0-9]+$ ]] && groupmod -g $GROUPID -o vpn
 [[ "${FIREWALL:-""}" || -e $route ]] && firewall "${FIREWALL:-""}"
-[[ "${ROUTE:-""}" ]] && return_route "$ROUTE"
+#[[ "${ROUTE:-""}" ]] && return_route "$ROUTE"
 [[ "${VPN:-""}" ]] && eval vpn $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $VPN)
-[[ "${VPNPORT:-""}" ]] && eval vpnportforward $(sed 's/^/"/; s/$/"/; s/;/" "/g'\
-            <<< $VPNPORT)
+#[[ "${VPNPORT:-""}" ]] && eval vpnportforward $(sed 's/^/"/; s/$/"/; s/;/" "/g'\
+#            <<< $VPNPORT)
 
-while getopts ":hc:df:m:p:R:r:v:" opt; do
-    case "$opt" in
-        h) usage ;;
-        c) cert_auth "$OPTARG" ;;
-        d) dns ;;
-        f) firewall "$OPTARG"; touch $route ;;
-        m) MSS="$OPTARG" ;;
-        p) eval vpnportforward $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $OPTARG) ;;
-        r) return_route "$OPTARG" ;;
-        v) eval vpn $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $OPTARG) ;;
-        "?") echo "Unknown option: -$OPTARG"; usage 1 ;;
-        ":") echo "No argument value for option: -$OPTARG"; usage 2 ;;
-    esac
-done
-shift $(( OPTIND - 1 ))
+# while getopts ":hc:df:m:p:R:r:v:" opt; do
+#     case "$opt" in
+#         h) usage ;;
+#         c) cert_auth "$OPTARG" ;;
+#         d) dns ;;
+#         f) firewall "$OPTARG"; touch $route ;;
+#         m) MSS="$OPTARG" ;;
+#         p) eval vpnportforward $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $OPTARG) ;;
+#         r) return_route "$OPTARG" ;;
+#         v) eval vpn $(sed 's/^/"/; s/$/"/; s/;/" "/g' <<< $OPTARG) ;;
+#         "?") echo "Unknown option: -$OPTARG"; usage 1 ;;
+#         ":") echo "No argument value for option: -$OPTARG"; usage 2 ;;
+#     esac
+# done
+# shift $(( OPTIND - 1 ))
+dns;
+firewall;
 
-if [[ $# -ge 1 && -x $(which $1 2>&-) ]]; then
-    exec "$@"
-elif [[ $# -ge 1 ]]; then
-    echo "ERROR: command not found: $1"
-    exit 13
-elif ps -ef | egrep -v 'grep|openvpn.sh' | grep -q openvpn; then
+if ps -ef | egrep -v 'grep|openvpn.sh' | grep -q openvpn; then
     echo "Service already running, please restart container to apply changes"
 else
     mkdir -p /dev/net
     [[ -c /dev/net/tun ]] || mknod -m 0666 /dev/net/tun c 10 200
     [[ -e $conf ]] || { echo "ERROR: VPN not configured!"; sleep 120; }
-    [[ -e $cert ]] || grep -q '<ca>' $conf ||
-        { echo "ERROR: VPN CA cert missing!"; sleep 120; }
     exec sg vpn -c "openvpn --cd $dir --config $conf \
                 ${MSS:+--fragment $MSS --mssfix}"
 fi
