@@ -78,7 +78,7 @@ conf="$dir/vpn.conf"
 dns;
 firewall;
 
-[[ "${OPENPORTS:-""}" ]] && open_port "${OPENPORTS:-""}"
+[[ "${OPENPORTS:-""}" ]] && open_port "$OPENPORTS"
 
 if ps -ef | egrep -v 'grep|openvpn.sh' | grep -q openvpn; then
     echo "Service already running, please restart container to apply changes"
