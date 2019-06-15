@@ -1,6 +1,6 @@
 # Credit
 
-This work is heavily based on the work of [David Personette](https://github.com/dperson/openvpn-client)
+This work is heavily based on the work of [David Personette](https://github.com/dperson/openvpn-client).
 
 # OpenVPN
 
@@ -76,7 +76,7 @@ For multiple services (non-existant 'foo' used as an example):
 ENVIRONMENT VARIABLES
 
  * `MSS` - As above, set Maximum Segment Size
- * `OPENPORTS` - Comma separated list of ports and protocols you want opened \
+ * `OPENPORTS` - Comma separated list of ports and protocols you want opened
  on the VPN tunnel. ie. `6881:tcp,6882:udp`
 
 ## Examples
@@ -86,7 +86,7 @@ Any of the commands can be run at creation with `docker run` or later with
 
 ### VPN configuration
 
-In order to work you must provide VPN configuration and the certificate \
+In order to work you must provide VPN configuration and the certificate
 together in an `ovpn` file. You can use external storage for `/vpn`:
 
     sudo cp /path/to/vpn.ovpn /some/path/vpn.ovpn
@@ -95,13 +95,13 @@ together in an `ovpn` file. You can use external storage for `/vpn`:
 
 ### Firewall
 
-Firewall is enabled by default. Loopback and Docker Network traffic is \
-permitted. DNS is restricted to the VPN interface. Internet traffic is \
+Firewall is enabled by default. Loopback and Docker Network traffic is
+permitted. DNS is restricted to the VPN interface. Internet traffic is
 restricted to the remote address defined in the `ovpn` file.
 
 VPN interface ports may be opened using the `OPENPORTS` environment variable.
 
 ### DNS
 
-By default this container will use the DNS settings provided by your VPN \
+By default this container will use the DNS settings provided by your VPN
 endpoint as using local DNS will cause leakage.
