@@ -26,12 +26,12 @@ or newer you can use the `--cap-add=NET_ADMIN` and `--device /dev/net/tun`
 options. Earlier versions, or with fig, and you'll have to run it in privileged
 mode.
 
-**NOTE 4**: If you have a VPN service that allows making local services
+**NOTE 1**: If you have a VPN service that allows making local services
 available, you'll need to reuse the VPN container's network stack with the
 `--net=container:vpn` (replacing 'vpn' with what you named your instance of this
 container) when you launch the service in it's container.
 
-**NOTE 5**: If you need a template for using this container with
+**NOTE 2**: If you need a template for using this container with
 `docker-compose`, see the example
 [file](https://github.com/nativusdoge/openvpn-client/raw/master/docker-compose.yml).
 
