@@ -1,4 +1,6 @@
-[![logo](https://raw.githubusercontent.com/nativusdoge/openvpn-client/master/logo.png)](https://openvpn.net/)
+# Credit
+
+This work is heavily based on the work of [David Personette](https://github.com/dperson/openvpn-client)
 
 # OpenVPN
 
@@ -75,7 +77,7 @@ ENVIRONMENT VARIABLES
 
  * `MSS` - As above, set Maximum Segment Size
  * `OPENPORTS` - Comma separated list of ports and protocols you want opened \
- on the VPN tunnel. ie. 6881:tcp,6882:udp
+ on the VPN tunnel. ie. `6881:tcp,6882:udp`
 
 ## Examples
 
@@ -85,7 +87,7 @@ Any of the commands can be run at creation with `docker run` or later with
 ### VPN configuration
 
 In order to work you must provide VPN configuration and the certificate \
-together in an ovpn file. You can use external storage for `/vpn`:
+together in an `ovpn` file. You can use external storage for `/vpn`:
 
     sudo cp /path/to/vpn.ovpn /some/path/vpn.ovpn
     sudo docker run -it --cap-add=NET_ADMIN --device /dev/net/tun --name vpn \
