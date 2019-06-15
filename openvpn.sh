@@ -202,7 +202,7 @@ route="$dir/.firewall"
 #     esac
 # done
 # shift $(( OPTIND - 1 ))
-dns;
+# dns;
 firewall;
 
 if ps -ef | egrep -v 'grep|openvpn.sh' | grep -q openvpn; then
