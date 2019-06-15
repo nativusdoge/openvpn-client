@@ -61,7 +61,8 @@ firewall() { local docker_network="$(ip -o addr show dev eth0 | awk '$3 == "inet
 #   ports) comma separated list of ports and protocols
 # Return: configured firewall
 open_port() { local ports="$1"
-    while IFS=',' read -ra ports; do
+
+    while IFS=',' read -ra $ports; do
         for i in "${ports[@]}"; do
             IFS=":" read var1 var2 <<< "$i"
             iptables -A INPUT -i tun0 -p $var2 --dport $var1 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
