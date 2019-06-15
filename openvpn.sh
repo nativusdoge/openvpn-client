@@ -64,6 +64,7 @@ firewall() { local docker_network="$(ip -o addr show dev eth0 | awk '$3 == "inet
     iptables -A OUTPUT -d ${docker_network} -p udp --dport 53 -j DROP
 
     iptables -A OUTPUT -d ${vpn_endpoint} -p tcp --dport ${port} -j ACCEPT
+    iptables -A OUTPUT -d ${vpn_endpoint} -p udp --dport ${port} -j ACCEPT
     iptables -A OUTPUT -o tun0 -j ACCEPT
     # [[ -s $route ]] && for net in $(cat $route); do return_route $net; done
 }
