@@ -75,7 +75,8 @@ For multiple services (non-existant 'foo' used as an example):
 
 ENVIRONMENT VARIABLES
 
- * `MSS` - As above, set Maximum Segment Size
+ * `MSS` - Set Maximum Segment Size
+ * `DNS` - Pull DNS settings from the VPN server
  * `OPENPORTS` - Comma separated list of ports and protocols you want opened
  on the VPN tunnel. ie. `6881:tcp,6882:udp`
 
@@ -103,5 +104,7 @@ VPN interface ports may be opened using the `OPENPORTS` environment variable.
 
 ### DNS
 
-By default this container will use the DNS settings provided by your VPN
-endpoint as using local DNS will cause leakage.
+By default this container will use the DNS settings provided by Docker which
+could end up being the public Google DNS nameservers. It is recommended to use the
+DNS servers provided by your VPN server by supplying the `DNS` environment
+variable.
